@@ -1,0 +1,259 @@
+# Lean declarations extracted from PDF
+
+## Definitions
+
+### `ShortComplex` — page 5
+
+**Mathematical text.**
+
+One of the main ideas in order to achieve this was to introduce the category of “short complexes”. Instead of using Lean terms like homology f g w, the idea was to introduce a structure ShortComplex C which bundles all this data:
+
+```lean
+structure ShortComplex [HasZeroMorphisms C] where
+{X1 X2 X3 : C}
+f : X1 −→X2
+g : X2 −→X3
+zero : f ≫g = 0
+```
+
+### `Splitting` — page 7
+
+**Mathematical text.**
+
+2.1.3 A significant advantage of this definition of homology and exactness is that it makes sense in very general categories. For example, if S is a short complex in any preadditive category C, we may introduce the notion of splitting of S:
+
+```lean
+structure Splitting (S : ShortComplex C) where
+/−−a retraction of ‵S.f‵ −/
+r : S.X2 −→S.X1
+/−−a section of ‵S.g‵ −/
+s : S.X3 −→S.X2
+/−−the condition that ‵r‵ is a retraction of ‵S.f‵ −/
+f_r : S.f ≫r = 1 S.X1 := by aesop_cat
+/−−the condition that ‵s‵ is a section of ‵S.g‵ −/
+s_g : s ≫S.g = 1 S.X3 := by aesop_cat
+/−−the compatibility between the given section and retraction −/
+id : r ≫S.f + S.g ≫s = 1 S.X2 := by aesop_cat
+```
+
+### `HasLocalization` — page 18
+
+**Mathematical text.**
+
+3.7.6 I have introduced the following type class HasLocalization.{w} W in order to take into account this universe issue:
+
+```lean
+universe w v u
+variable {C : Type u} [Category.{v} C]
+class HasLocalization (W : MorphismProperty C) where
+/−−the objects of the localized category. −/
+{D : Type u}
+/−−the category structure. −/
+[hD : Category.{w} D]
+/−−the localization functor. −/
+L : C ⇒D
+[hL : L.IsLocalization W]
+```
+
+### `HasDerivedCategory` — page 18
+
+**Mathematical text.**
+
+3.7.7 In the particular case of derived categories, there is an abbreviation:
+
+```lean
+abbrev HasDerivedCategory := MorphismProperty.HasLocalization.{w}
+(HomologicalComplex.quasiIso C (ComplexShape.up Z))
+```
+
+### `CommShift.isoAdd` — page 23
+
+**Mathematical text.**
+
+From the data of such isomorphisms for two elements a and b, we may also construct a commutation isomorphism for the shift by a + b:
+
+```lean
+def CommShift.isoAdd {a b : A}
+(e1 : shiftFunctor C a ≫F ∼= F ≫shiftFunctor D a)
+(e2 : shiftFunctor C b ≫F ∼= F ≫shiftFunctor D b) :
+shiftFunctor C (a + b) ≫F ∼= F ≫shiftFunctor D (a + b) :=
+```
+
+### `CommShift` — page 23
+
+**Mathematical text.**
+
+Using these definitions, I have formalized a type class F.CommShift A which expresses that F commutes with the shifts by A as follows:
+
+```lean
+class CommShift where
+iso (a : A) : shiftFunctor C a ≫F ∼= F ≫shiftFunctor D a
+zero : iso 0 = CommShift.isoZero F A := by aesop_cat
+add (a b : A) : iso (a + b) = CommShift.isoAdd (iso a) (iso b) := by aesop_cat
+```
+
+### `equivHom` — page 25
+
+**Mathematical text.**
+
+4.3.3 Calculus of cochains In order to verify the axioms of triangulated categories for the homotopy category of cochain complexes, it is convenient to introduce the cochain complex of morphisms Hom•(K, L) for two cochain complexes K and L [Con00, p. 10]. It is a cochain complex in the category of abelian groups which in degree n consists of families of morphisms K p →Lq for all (p,q) ∈Z2 such that p + n = q. The differentials on Hom•(K, L) are defined in such a way that an element in Hom0(K, L) is a cocycle if and only if it corresponds to a morphism of cochain complexes K →L. In mathlib, I have implemented this definition as the cochain complex HomComplex K L. However, the more convenient related definitions are the types of cochains HomComplex.Cochain K L n and cocycles HomComplex.Cocycle K L n in this complex. We obtain the expected correspondence between morphisms of cochain complexes and 0- cocycles as:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def equivHom : (K −→L) ≃+ Cocycle K L 0 where
+...
+```
+
+### `equivHomotopy` — page 25
+
+**Mathematical text.**
+
+Similarly, two morphisms of cochain complexes ϕi : K →L for i ∈{1,2} are homotopic if and only if the corresponding cochains are cohomologous:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def equivHomotopy (ϕ1 ϕ2 : K −→L) :
+Homotopy ϕ1 ϕ2 ≃
+{ z : Cochain K L (−1) //
+Cochain.ofHom ϕ1 = δ (−1) 0 z + Cochain.ofHom ϕ2 } where
+...
+```
+
+### `inl` — page 26
+
+**Mathematical text.**
+
+Then, in the verification of the axioms of triangulated categories, as we need to construct morphisms from or to mapping cones of morphisms (and homotopies), it is very convenient to manipulate them as cochains. For example, we have the following definitions for the left and right inclusions in the mapping cone of a morphism f : K →L and the first and second projections from it: Joël Riou
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def inl : Cochain K (mappingCone f) (−1) := ...
+```
+
+### `inr` — page 26
+
+**Mathematical text.**
+
+Then, in the verification of the axioms of triangulated categories, as we need to construct morphisms from or to mapping cones of morphisms (and homotopies), it is very convenient to manipulate them as cochains. For example, we have the following definitions for the left and right inclusions in the mapping cone of a morphism f : K →L and the first and second projections from it: Joël Riou
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def inr : L −→mappingCone f := ....
+```
+
+### `fst` — page 26
+
+**Mathematical text.**
+
+Then, in the verification of the axioms of triangulated categories, as we need to construct morphisms from or to mapping cones of morphisms (and homotopies), it is very convenient to manipulate them as cochains. For example, we have the following definitions for the left and right inclusions in the mapping cone of a morphism f : K →L and the first and second projections from it: Joël Riou
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def fst : Cocycle (mappingCone f) K 1 := ...
+```
+
+### `snd` — page 26
+
+**Mathematical text.**
+
+Then, in the verification of the axioms of triangulated categories, as we need to construct morphisms from or to mapping cones of morphisms (and homotopies), it is very convenient to manipulate them as cochains. For example, we have the following definitions for the left and right inclusions in the mapping cone of a morphism f : K →L and the first and second projections from it: Joël Riou
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+def snd : Cochain (mappingCone f) L 0 := ...
+```
+
+### `SpectralSequence` — page 34
+
+**Mathematical text.**
+
+5.4.1 I have formalized the definition of a spectral sequence as follows:
+
+```lean
+variable (C : Type∗) [Category C] [Abelian C]
+{ι : Type∗} (c : Z →ComplexShape ι) (r0 : Z)
+structure SpectralSequence where
+−−the ‵r‵th page of the spectral sequence
+page′ (r : Z) (hr : r0 ≤r) : HomologicalComplex C (c r)
+−−the homology of a page identifies to the next page
+iso′ (r r′ : Z) (hrr′ : r + 1 = r′) (pq : ι) (hr : r0 ≤r) :
+(page′ r hr).homology pq ∼= (page′ r′ (by omega)).X pq
+```
+
+## Lemmas
+
+### `epi_iff_surjective_up_to_refinements` — page 9
+
+**Mathematical text.**
+
+The key observation is the following lemma which characterizes epimorphisms in any abelian category C:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+lemma epi_iff_surjective_up_to_refinements (f : X −→Y) :
+Epi f ↔∀{|A : C|} (y : A −→Y),
+∃(A′ : C) (π : A′ −→A) (_ : Epi π) (x : A′ −→X), π ≫y = x ≫f := ...
+```
+
+### `ShortComplex.exact_iff_exact_up_to_refinements` — page 10
+
+**Mathematical text.**
+
+As the exactness of a short complex X1 f→X2 g→X3 in an abelian category can be rephased by saying that the induced map X1 →ker g is an epimorphism, it is possible to deduce that similarly, exactness is equivalent to “exactness up to refinements”:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+lemma ShortComplex.exact_iff_exact_up_to_refinements (S : ShortComplex C) :
+S.Exact ↔∀{|A : C|} (x2 : A −→S.X2) (_ : x2 ≫S.g = 0),
+∃(A′ : C) (π : A′ −→A) (_ : Epi π) (x1 : A′ −→S.X1),
+π ≫x2 = x1 ≫S.f := ...
+```
+
+### `inl_fst` — page 26
+
+**Mathematical text.**
+
+An important structure on cochains is that they can be composed: if z1 : Cochain K L a and z2 : Cochain L M b, we may construct their composition in Cochain K M (a + b). Actually, similarly as for shifts 4.2.5, I defined the composition z1.comp z2 h : Cochain K M c for any c : Z such that h : a + b = c holds. Computations can be achieved using lemmas like:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+lemma inl_fst :
+(inl f).comp (fst f).1 (neg_add_self 1) = Cochain.ofHom (1 K) := ...
+```
+
+### `comp_assoc` — page 27
+
+**Mathematical text.**
+
+One of the difficulties when proving equalities involving cochains is related to the associa- tivity of the composition of cochains. In category theory, when f, g and h are composable morphisms, a term (f ≫g) ≫h is automatically replaced by the simp tactic as f ≫(g ≫h) (and then, the parentheses are redundant). Automation in mathlib relies on this design choice that compositions are “associated towards the right”. We may try to do the same for cochains, but the lemma expressing the associativity of the composition of cochains is phrased as follows:
+
+**Note.** The PDF appears to abbreviate this Lean code with an ellipsis; the omitted body cannot be recovered from the PDF alone.
+
+```lean
+lemma comp_assoc {n1 n2 n3 n12 n23 n123 : Z}
+(z1 : Cochain F G n1) (z2 : Cochain G K n2) (z3 : Cochain K L n3)
+(h12 : n1 + n2 = n12) (h23 : n2 + n3 = n23) (h123 : n1 + n2 + n3 = n123) :
+(z1.comp z2 h12).comp z3 (show n12 + n3 = n123 by rw [←h12, h123]) =
+z1.comp (z2.comp z3 h23) (by rw [←h23, ←h123, add_assoc]) := by ...
+```
+
+## Theorems
+
+_None found._
+
+## Examples
+
+_None found._
+
+## Other declarations
+
+_None found._
