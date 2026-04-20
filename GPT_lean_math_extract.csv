@@ -1,0 +1,80 @@
+page_number,lean_code_block,mathematics_text_corresponding_to_the_lean_block
+5,"structure ShortComplex [HasZeroMorphisms C] where
+  {X1 X2 X3 : C}
+  f : X1 ⟶ X2
+  g : X2 ⟶ X3
+  zero : f ≫ g = 0","Given two composable morphisms X1 ⟶ X2 ⟶ X3 with f ≫ g = 0, one may define the homology at X2 as the cokernel of the canonical map Im f ⟶ ker g. To make homology and exactness self-dual and easier to manipulate, the article introduces the category of “short complexes”, bundling exactly this data into one object."
+7,"structure Splitting (S : ShortComplex C) where
+  /-- a retraction of `S.f` -/
+  r : S.X2 ⟶ S.X1
+  /-- a section of `S.g` -/
+  s : S.X3 ⟶ S.X2
+  /-- the condition that `r` is a retraction of `S.f` -/
+  f_r : S.f ≫ r = 𝟙 S.X1 := by aesop_cat
+  /-- the condition that `s` is a section of `S.g` -/
+  s_g : s ≫ S.g = 𝟙 S.X3 := by aesop_cat
+  /-- the compatibility between the given section and retraction -/
+  id : r ≫ S.f + S.g ≫ s = 𝟙 S.X2 := by aesop_cat","For a short complex S in a preadditive category, the article introduces the notion of a splitting: a retraction of S.f, a section of S.g, and a compatibility identity on S.X2. The text explains that, although the morphisms r and s must be supplied, the equations are often discharged automatically by aesop_cat. It also notes that if S is split and the category has a zero object, then S is a (short) exact short complex."
+9,"lemma epi_iff_surjective_up_to_refinements (f : X ⟶ Y) :
+  Epi f ↔ ∀ {|A : C|} (y : A ⟶ Y),
+    ∃ (A' : C) (π : A' ⟶ A) (_ : Epi π) (x : A' ⟶ X), π ≫ y = x ≫ f := ...",The article calls this the key observation for diagram chasing in an abelian category: a morphism f : X ⟶ Y is an epimorphism exactly when every morphism y : A ⟶ Y becomes liftable after precomposition with a suitable epimorphism A' ⟶ A. The text describes this as being “surjective up to refinements”.
+10,"lemma ShortComplex.exact_iff_exact_up_to_refinements (S : ShortComplex C) :
+  S.Exact ↔ ∀ {|A : C|} (x2 : A ⟶ S.X2) (_ : x2 ≫ S.g = 0),
+    ∃ (A' : C) (π : A' ⟶ A) (_ : Epi π) (x1 : A' ⟶ S.X1),
+      π ≫ x2 = x1 ≫ S.f := ...","Since exactness of X1 ⟶ X2 ⟶ X3 may be rephrased by saying that the induced map X1 ⟶ ker g is an epimorphism, the article explains that exactness is likewise equivalent to “exactness up to refinements”."
+16,"universe v u
+variable (C : Type u) [Category.{v} C]","In the discussion of universe issues, the article explains that introducing a category C in mathlib typically requires two universes: u for the type of objects, and v for the hom-types. This short code block is given as the standard way to declare such a category in Lean."
+18,"universe w v u
+variable {C : Type u} [Category.{v} C]
+
+class HasLocalization (W : MorphismProperty C) where
+  /-- the objects of the localized category. -/
+  {D : Type u}
+  /-- the category structure. -/
+  [hD : Category.{w} D]
+  /-- the localization functor. -/
+  L : C ⥤ D
+  [hL : L.IsLocalization W]","To deal with the additional universe level needed for morphisms in a localized category, the article introduces the type class HasLocalization.{w} W. The surrounding text says that this class packages a chosen localization functor L : C ⥤ D such that the morphism types in D live in Type w."
+18,"theorem ... : ... := by
+  have : HasLocalization.{max u v} W := HasLocalization.standard W
+  -- from now on, we access the localized category as `W.Localization`
+  ...","The article explains that if a theorem statement itself does not mention localized categories but the proof needs them, then one can work under [HasLocalization.{w} W] in auxiliary results and, inside the final theorem proof, instantiate the standard localization with HasLocalization.standard W."
+18,"abbrev HasDerivedCategory := MorphismProperty.HasLocalization.{w}
+  (HomologicalComplex.quasiIso C (ComplexShape.up ℤ))","After introducing HasLocalization, the article notes that in the special case of derived categories there is a dedicated abbreviation, namely HasDerivedCategory."
+22,"def CommShift.isoZero :
+  shiftFunctor C (0 : A) ⋙ F ≅ F ⋙ shiftFunctor D (0 : A) := ...","To formalize that a functor F commutes with shifts by an additive monoid A, the article says one should provide isomorphisms shiftFunctor C a ⋙ F ≅ F ⋙ shiftFunctor D a for all a : A. For a = 0, there is an obvious such isomorphism, formalized here as CommShift.isoZero."
+23,"def CommShift.isoAdd {a b : A}
+  (e1 : shiftFunctor C a ⋙ F ≅ F ⋙ shiftFunctor D a)
+  (e2 : shiftFunctor C b ⋙ F ≅ F ⋙ shiftFunctor D b) :
+  shiftFunctor C (a + b) ⋙ F ≅ F ⋙ shiftFunctor D (a + b) := ...","Given commutation isomorphisms for shifts by a and by b, the article constructs a corresponding commutation isomorphism for the shift by a + b."
+23,"class CommShift where
+  iso (a : A) : shiftFunctor C a ⋙ F ≅ F ⋙ shiftFunctor D a
+  zero : iso 0 = CommShift.isoZero F A := by aesop_cat
+  add (a b : A) : iso (a + b) = CommShift.isoAdd (iso a) (iso b) := by aesop_cat","Using the previous constructions, the article formalizes a type class F.CommShift A expressing that F commutes with shifts by A. The surrounding discussion adds that, under this assumption, the API exposes the isomorphism for a given shift as F.commShiftIso a."
+25,"def equivHom : (K ⟶ L) ≃+ Cocycle K L 0 where
+  ...","The article introduces the cochain complex Hom•(K, L) and explains that an element of Hom^0(K, L) is a cocycle if and only if it corresponds to a morphism of cochain complexes K ⟶ L. This equivalence is formalized by equivHom."
+25,"def equivHomotopy (φ1 φ2 : K ⟶ L) :
+  Homotopy φ1 φ2 ≃
+    { z : Cochain K L (-1) //
+      Cochain.ofHom φ1 = δ (-1) 0 z + Cochain.ofHom φ2 } where
+  ...",The article next states that two morphisms of cochain complexes are homotopic if and only if the corresponding cochains are cohomologous. This is encoded by equivHomotopy.
+26,"def inl : Cochain K (mappingCone f) (-1) := ...
+def inr : L ⟶ mappingCone f := ...
+def fst : Cocycle (mappingCone f) K 1 := ...
+def snd : Cochain (mappingCone f) L 0 := ...","When verifying triangulated-category axioms, the article emphasizes that it is convenient to manipulate morphisms from and to mapping cones as cochains. It therefore defines the left and right inclusions in the mapping cone of a morphism f : K ⟶ L, together with the first and second projections from it."
+26,"lemma inl_fst :
+  (inl f).comp (fst f).1 (neg_add_self 1) = Cochain.ofHom (𝟙 K) := ...","The article explains that cochains can be composed: if z1 has degree a and z2 has degree b, their composition lies in degree a + b, but the user provides an explicit equality witnessing the target degree. The example here uses that inl f has degree -1 and fst f has degree 1, so neg_add_self 1 identifies the result as a 0-cochain."
+27,"lemma comp_assoc {n1 n2 n3 n12 n23 n123 : ℤ}
+  (z1 : Cochain F G n1) (z2 : Cochain G K n2) (z3 : Cochain K L n3)
+  (h12 : n1 + n2 = n12) (h23 : n2 + n3 = n23) (h123 : n1 + n2 + n3 = n123) :
+  (z1.comp z2 h12).comp z3 (show n12 + n3 = n123 by rw [← h12, h123]) =
+    z1.comp (z2.comp z3 h23) (by rw [← h23, ← h123, add_assoc]) := by ...","The article discusses a subtlety in formalizing associativity of cochain composition: unlike ordinary categorical composition, one must explicitly provide integer equalities describing the degree of each composite. The displayed lemma comp_assoc records this associativity with the necessary degree witnesses."
+34,"variable (C : Type*) [Category C] [Abelian C]
+  {ι : Type*} (c : ℤ → ComplexShape ι) (r0 : ℤ)
+
+structure SpectralSequence where
+  -- the r-th page of the spectral sequence
+  page' (r : ℤ) (hr : r0 ≤ r) : HomologicalComplex C (c r)
+  -- the homology of a page identifies to the next page
+  iso' (r r' : ℤ) (hrr' : r + 1 = r') (pq : ι) (hr : r0 ≤ r) :
+    (page' r hr).homology pq ≅ (page' r' (by omega)).X pq","The article formalizes a spectral sequence starting on page r0 as a family of homological complexes, one for each r ≥ r0, together with isomorphisms identifying the homology of page r with page r + 1. It adds that all pages are indexed by the same type ι, while the differential shape may vary with r."
