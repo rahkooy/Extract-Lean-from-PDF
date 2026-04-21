@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Extract displayed Lean declarations from a mathematics article PDF and pair
 each declaration with the nearest preceding mathematical prose.
